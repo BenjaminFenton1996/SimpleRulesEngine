@@ -1,10 +1,12 @@
 ﻿using DynamicExpresso;
+using System;
+using System.Collections.Generic;
 
 namespace SimpleRulesEngine
 {
-    public class RuleEvaluator
+    public class WorkflowEvaluator
     {
-        private readonly Interpreter Interpreter = new();
+        private readonly Interpreter Interpreter = new Interpreter();
 
         public Dictionary<string, bool> EvaluateWorkflow(object input, IReadOnlyDictionary<string, Delegate> registeredActions, Workflow workflow)
         {
@@ -14,21 +16,21 @@ namespace SimpleRulesEngine
                 var rulePassed = EvaluateRule(input, rule);
                 ruleResults.Add(rule.RuleName, rulePassed);
 
-                if (rule.OnEvaluation is not null)
+                if (rule.OnEvaluation != null)
                 {
                     if (registeredActions.TryGetValue(rule.OnEvaluation, out var ruleAction))
                     {
                         ruleAction.DynamicInvoke(input);
                     }
                 }
-                if (rulePassed && rule.OnSuccess is not null)
+                if (rulePassed && rule.OnSuccess != null)
                 {
                     if (registeredActions.TryGetValue(rule.OnSuccess, out var ruleAction))
                     {
                         ruleAction.DynamicInvoke(input);
                     }
                 }
-                else if (rule.OnFailure is not null)
+                else if (rule.OnFailure != null)
                 {
                     if (registeredActions.TryGetValue(rule.OnFailure, out var ruleAction))
                     {

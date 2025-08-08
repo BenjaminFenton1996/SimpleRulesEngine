@@ -1,8 +1,16 @@
-﻿namespace SimpleRulesEngine
+﻿using System.Collections.Generic;
+
+namespace SimpleRulesEngine
 {
-    public class Workflow(string workflowName, IReadOnlyCollection<Rule> rules)
+    public class Workflow
     {
-        public readonly string WorkflowName = workflowName;
-        public readonly IReadOnlyCollection<Rule> Rules = rules;
+        public readonly string WorkflowName;
+        public readonly IReadOnlyCollection<Rule> Rules;
+
+        public Workflow(string workflowName, IReadOnlyCollection<Rule> rules)
+        {
+            WorkflowName = workflowName;
+            Rules = rules;
+        }
     }
 }

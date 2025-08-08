@@ -1,4 +1,6 @@
-﻿namespace SimpleRulesEngine.Tests
+﻿using SimpleRulesEngine.Interfaces;
+
+namespace SimpleRulesEngine.Tests
 {
     public class InputEnvelope
     {
