@@ -1,7 +1,9 @@
-﻿namespace SimpleRulesEngine.Interfaces
+﻿using System.Collections.Generic;
+
+namespace SimpleRulesEngine.Interfaces
 {
     public interface IRulesEngineAction
     {
-        void Handle(object input);
+        void Handle(object input, Dictionary<string, object> context);
     }
 }

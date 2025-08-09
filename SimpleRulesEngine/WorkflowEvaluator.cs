@@ -20,21 +20,21 @@ namespace SimpleRulesEngine
                 {
                     if (registeredActions.TryGetValue(rule.OnEvaluation, out var ruleAction))
                     {
-                        ruleAction.DynamicInvoke(input);
+                        ruleAction.DynamicInvoke(input, rule.Context);
                     }
                 }
-                if (rulePassed && rule.OnSuccess != null)
+                if (rule.OnSuccess != null && rulePassed)
                 {
                     if (registeredActions.TryGetValue(rule.OnSuccess, out var ruleAction))
                     {
-                        ruleAction.DynamicInvoke(input);
+                        ruleAction.DynamicInvoke(input, rule.Context);
                     }
                 }
-                else if (rule.OnFailure != null)
+                else if (rule.OnFailure != null && !rulePassed)
                 {
                     if (registeredActions.TryGetValue(rule.OnFailure, out var ruleAction))
                     {
-                        ruleAction.DynamicInvoke(input);
+                        ruleAction.DynamicInvoke(input, rule.Context);
                     }
                 }
             }

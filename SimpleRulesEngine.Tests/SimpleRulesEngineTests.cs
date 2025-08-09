@@ -1,48 +1,9 @@
-﻿using SimpleRulesEngine.Interfaces;
+﻿using SimpleRulesEngine.Tests.RuleActions;
+using System.Text.Json;
 
 namespace SimpleRulesEngine.Tests
 {
-    public class InputEnvelope
-    {
-        public int SomeNumber { get; set; }
-        public bool OnEvaluationActionWasInvoked { get; set; }
-        public bool OnSuccessActionWasInvoked { get; set; }
-        public bool OnFailureActionWasInvoked { get; set; }
-    }
-
-    public class OnEvaluationAction : IRulesEngineAction
-    {
-        public void Handle(object input)
-        {
-            if (input is InputEnvelope envelope)
-            {
-                envelope.OnEvaluationActionWasInvoked = true;
-            }
-        }
-    }
-
-    public class OnSuccessAction : IRulesEngineAction
-    {
-        public void Handle(object input)
-        {
-            if (input is InputEnvelope envelope)
-            {
-                envelope.OnSuccessActionWasInvoked = true;
-            }
-        }
-    }
-
-    public class OnFailureAction : IRulesEngineAction
-    {
-        public void Handle(object input)
-        {
-            if (input is InputEnvelope envelope)
-            {
-                envelope.OnFailureActionWasInvoked = true;
-            }
-        }
-    }
-
+    [TestFixture]
     public class SimpleRulesEngineTests
     {
         private SimpleRulesEngine _rulesEngine = new([]);
@@ -54,47 +15,141 @@ namespace SimpleRulesEngine.Tests
         }
 
         [TestCase]
+        public void ManyLargeWorkflowsTest()
+        {
+            var workflows = new List<Workflow>()
+            {
+                new Workflow("workflowOne", new List<Rule>()
+                {
+                    new Rule(
+                        "rule1", "input.SomeNumber == 1",
+                        onEvaluation: typeof(SetEvaluationActionAsInvoked).Name
+                    ),
+                    new Rule(
+                        "rule2", "input.OnEvaluationActionWasInvoked == true",
+                        onSuccess: typeof(SetSuccessActionAsInvoked).Name
+                    ),
+                    new Rule(
+                        "rule3", "input.OnSuccessActionWasInvoked == false",
+                        onFailure: typeof(SetFailureActionAsInvoked).Name
+                    ),
+                    new Rule(
+                        "rule4", "input.SomeNumber == 1 && input.OnEvaluationActionWasInvoked == true && input.OnSuccessActionWasInvoked == false"
+                    )
+                })
+            };
+
+            _rulesEngine = new SimpleRulesEngine(workflows);
+            _rulesEngine.RegisterAction(new SetEvaluationActionAsInvoked());
+            _rulesEngine.RegisterAction<SetSuccessActionAsInvoked>();
+            _rulesEngine.RegisterAction<SetFailureActionAsInvoked>();
+
+            var input = new InvocationTestInput()
+            {
+                SomeNumber = 1
+            };
+
+            //Evaluate the workflow 10,000 times to test performance
+            for (int i = 0; i < 10000; i++)
+            {
+                var evaluationResult = _rulesEngine.EvaluateAll(input);
+                Assert.Multiple(() =>
+                {
+                    Assert.That(input.OnSuccessActionWasInvoked, Is.True);
+                    Assert.That(input.OnFailureActionWasInvoked, Is.True);
+                    Assert.That(input.OnEvaluationActionWasInvoked, Is.True);
+                });
+
+                input.SomeNumber = 1;
+                input.OnSuccessActionWasInvoked = false;
+                input.OnFailureActionWasInvoked = false;
+                input.OnEvaluationActionWasInvoked = false;
+            }
+        }
+
+        [TestCase]
+        public void ComplexWorkflowTest()
+        {
+            _rulesEngine.RegisterAction<AddDiscount>();
+            _rulesEngine.RegisterAction<ApplyDiscounts>();
+
+            var workflow = new Workflow("discountWorkflow", new List<Rule>()
+            {
+                new Rule(
+                    "checkBirthdayDiscount", "input.Birthday.ToString() == \"22/03/1990 00:00:00\"",
+                    onSuccess: typeof(AddDiscount).Name,
+                    context: new (){ { "discount", 5 } }
+                ),
+                new Rule(
+                    "checkLoyaltyDiscount", "input.IsLoyaltyMember == true",
+                    onSuccess: typeof(AddDiscount).Name,
+                    context: new (){ { "discount", 10 } }
+                ),
+                new Rule(
+                    "applyDiscounts", "input.TotalDiscount > 0",
+                    onSuccess: typeof(ApplyDiscounts).Name
+                )
+            });
+
+            var input = new ComplexWorkflowInput()
+            {
+                Birthday = new DateTime(year: 1990, month: 3, day: 22),
+                TotalCost = 0,
+                TotalDiscount = 0,
+                CartPrices = [1.50M, 4, 0.20M],
+                IsLoyaltyMember = true
+            };
+
+            var evaluationResult = _rulesEngine.Evaluate(input, workflow);
+            Assert.Multiple(() =>
+            {
+                Assert.That(evaluationResult.Values, Has.All.True);
+                Assert.That(input.TotalCost, Is.EqualTo(4.845M));
+            });
+        }
+
+        [TestCase]
         public void RuleActionsShouldBeTriggered()
         {
-            _rulesEngine.RegisterAction<OnSuccessAction>();
-            _rulesEngine.RegisterAction<OnFailureAction>();
-            _rulesEngine.RegisterAction(new OnEvaluationAction());
+            _rulesEngine.RegisterAction(new SetEvaluationActionAsInvoked());
+            _rulesEngine.RegisterAction<SetSuccessActionAsInvoked>();
+            _rulesEngine.RegisterAction<SetFailureActionAsInvoked>();
 
             var rule = new Rule(
                 "someRule", "input.SomeNumber == 1",
-                onEvaluation: typeof(OnEvaluationAction).Name,
-                onSuccess: typeof(OnSuccessAction).Name,
-                onFailure: typeof(OnFailureAction).Name
+                onEvaluation: typeof(SetEvaluationActionAsInvoked).Name,
+                onSuccess: typeof(SetSuccessActionAsInvoked).Name,
+                onFailure: typeof(SetFailureActionAsInvoked).Name
             );
 
             var workflow = new Workflow("name", [rule]);
 
-            var envelope = new InputEnvelope()
+            var input = new InvocationTestInput()
             {
                 SomeNumber = 1
             };
 
             //The rule should pass, so only the OnSuccess and OnEvaluation actions should be executed
-            var evaluationResult = _rulesEngine.Evaluate(envelope, workflow);
+            var evaluationResult = _rulesEngine.Evaluate(input, workflow);
             Assert.Multiple(() =>
             {
-                Assert.That(envelope.OnSuccessActionWasInvoked, Is.True);
-                Assert.That(envelope.OnFailureActionWasInvoked, Is.False);
-                Assert.That(envelope.OnEvaluationActionWasInvoked, Is.True);
+                Assert.That(input.OnSuccessActionWasInvoked, Is.True);
+                Assert.That(input.OnFailureActionWasInvoked, Is.False);
+                Assert.That(input.OnEvaluationActionWasInvoked, Is.True);
             });
 
-            envelope.SomeNumber = 2;
-            envelope.OnSuccessActionWasInvoked = false;
-            envelope.OnFailureActionWasInvoked = false;
-            envelope.OnEvaluationActionWasInvoked = false;
+            input.SomeNumber = 2;
+            input.OnSuccessActionWasInvoked = false;
+            input.OnFailureActionWasInvoked = false;
+            input.OnEvaluationActionWasInvoked = false;
 
             //The rule should fail, so only the OnFailure and OnEvaluation actions should be executed
-            evaluationResult = _rulesEngine.Evaluate(envelope, workflow);
+            evaluationResult = _rulesEngine.Evaluate(input, workflow);
             Assert.Multiple(() =>
             {
-                Assert.That(envelope.OnSuccessActionWasInvoked, Is.False);
-                Assert.That(envelope.OnFailureActionWasInvoked, Is.True);
-                Assert.That(envelope.OnEvaluationActionWasInvoked, Is.True);
+                Assert.That(input.OnSuccessActionWasInvoked, Is.False);
+                Assert.That(input.OnFailureActionWasInvoked, Is.True);
+                Assert.That(input.OnEvaluationActionWasInvoked, Is.True);
             });
         }
 

@@ -22,19 +22,31 @@ namespace SimpleRulesEngine
             return EvaluateAll(input, _workflows.Values);
         }
 
+        /// <summary>
+        /// Registers an action from an instance of IRulesEngineAction
+        /// </summary>
+        /// <param name="concretion">The instance IRulesEngineAction to use to register the action</param>
         public void RegisterAction(IRulesEngineAction concretion)
         {
-            var handlerDelegate = Delegate.CreateDelegate(typeof(Action<object>), concretion, nameof(IRulesEngineAction.Handle));
+            var handlerDelegate = Delegate.CreateDelegate(typeof(Action<object, Dictionary<string, object>>), concretion, nameof(IRulesEngineAction.Handle));
             _registeredActions.Add(concretion.GetType().Name, handlerDelegate);
         }
 
+        /// <summary>
+        /// Registers an action from a type of IRulesEngineAction
+        /// </summary>
         public void RegisterAction<ConcreteAction>() where ConcreteAction : IRulesEngineAction, new()
         {
             var concretion = new ConcreteAction();
-            var handlerDelegate = Delegate.CreateDelegate(typeof(Action<object>), concretion, nameof(IRulesEngineAction.Handle));
+            var handlerDelegate = Delegate.CreateDelegate(typeof(Action<object, Dictionary<string, object>>), concretion, nameof(IRulesEngineAction.Handle));
             _registeredActions.Add(typeof(ConcreteAction).Name, handlerDelegate);
         }
 
+        /// <summary>
+        /// Evaluates every registered workflow
+        /// </summary>
+        /// <param name="input">The value to run through the workflow</param>
+        /// <param name="workflows">The registered workflows</param>
         public Dictionary<string, Dictionary<string, bool>> EvaluateAll(object input, IReadOnlyCollection<Workflow> workflows)
         {
             var results = new Dictionary<string, Dictionary<string, bool>>();
@@ -45,6 +57,11 @@ namespace SimpleRulesEngine
             return results;
         }
 
+        /// <summary>
+        /// Finds a registered workflow by its namee and evaluates it
+        /// </summary>
+        /// <param name="input">The value to run through the workflow</param>
+        /// <param name="workflowName">The name of the workflow to run</param>
         public Dictionary<string, bool> Evaluate(object input, string workflowName)
         {
             _ = _workflows.TryGetValue(workflowName, out var workflow);
@@ -56,6 +73,11 @@ namespace SimpleRulesEngine
             return Evaluate(input, workflow);
         }
 
+        /// <summary>
+        /// Evaluates a given workflow
+        /// </summary>
+        /// <param name="input">The value to run through the workflow</param>
+        /// <param name="workflows">The workflow to evaluate</param>
         public Dictionary<string, bool> Evaluate(object input, Workflow workflow)
         {
             return _ruleEvaluator.EvaluateWorkflow(input, _registeredActions, workflow);
