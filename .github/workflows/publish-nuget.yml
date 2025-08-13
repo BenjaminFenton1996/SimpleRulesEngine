@@ -14,22 +14,24 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        # Using .NET 8.0 SDK, which can build .NET Standard 2.0 projects
-        dotnet-version: '8.0.x' 
+        dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore dependencies for the main project
+      # We now specify the project file directly to ignore the test project.
+      run: dotnet restore ./SimpleRulesEngine/SimpleRulesEngine.csproj
 
-    - name: Build project
-      # Building in Release configuration. The --no-restore flag is used because the previous step already handled it.
-      run: dotnet build --configuration Release --no-restore
+    - name: Build the main project
+      # We specify the project file again to ensure only the library is built.
+      run: dotnet build ./SimpleRulesEngine/SimpleRulesEngine.csproj --configuration Release --no-restore
 
-    - name: Pack project
-      # This step creates the NuGet package.
-      # It overrides the <Version> in your .csproj with the release tag from GitHub.
-      # This ensures your package version matches your release version (e.g., v1.0.1).
-      run: dotnet pack --configuration Release --no-build -p:PackageVersion=${{ github.event.release.tag_name }} --output ./nupkg
+    - name: Pack the main project
+      run: >
+        dotnet pack ./SimpleRulesEngine/SimpleRulesEngine.csproj 
+        --configuration Release 
+        --no-build 
+        -p:PackageVersion=${{ github.event.release.tag_name }} 
+        --output ./nupkg
 
     - name: Push to NuGet
-      # This pushes the package to NuGet.org using the API key you stored in secrets.
+      # The push command remains the same, targeting the created package.
       run: dotnet nuget push "./nupkg/SimpleRulesEngine.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
