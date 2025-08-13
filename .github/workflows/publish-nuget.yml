@@ -29,7 +29,7 @@ jobs:
         dotnet pack ./SimpleRulesEngine/SimpleRulesEngine.csproj 
         --configuration Release 
         --no-build 
-        -p:PackageVersion=${{ trim(github.event.release.tag_name, 'v') }} 
+        -p:PackageVersion=${{ github.event.release.tag_name }} 
         --output ./nupkg
 
     - name: Push to NuGet
