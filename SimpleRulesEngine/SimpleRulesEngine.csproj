@@ -3,6 +3,16 @@
   <PropertyGroup>
 	<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 	<TargetFrameworks>netstandard2.0</TargetFrameworks>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Title>Simple Rules Engine</Title>
+	<PackageId>SimpleRulesEngine</PackageId>
+	<Description>A simple and opinionated rules engine</Description>
+	<RepositoryUrl>https://github.com/BenjaminFenton1996/SimpleRulesEngine</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
+	<PackageTags>rules engine workflow configuration driven</PackageTags>
+	<PackageProjectUrl>https://github.com/BenjaminFenton1996/SimpleRulesEngine</PackageProjectUrl>
+	<Version>1.0.0</Version>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

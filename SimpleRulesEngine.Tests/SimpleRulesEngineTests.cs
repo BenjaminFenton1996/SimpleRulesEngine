@@ -1,5 +1,4 @@
 ﻿using SimpleRulesEngine.Tests.RuleActions;
-using System.Text.Json;
 
 namespace SimpleRulesEngine.Tests
 {

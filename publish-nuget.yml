@@ -1,0 +1,35 @@
+name: Publish SimpleRulesEngine to NuGet
+
+on:
+  release:
+    types: [published] # This workflow runs when a new GitHub Release is published
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        # Using .NET 8.0 SDK, which can build .NET Standard 2.0 projects
+        dotnet-version: '8.0.x' 
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      # Building in Release configuration. The --no-restore flag is used because the previous step already handled it.
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Pack project
+      # This step creates the NuGet package.
+      # It overrides the <Version> in your .csproj with the release tag from GitHub.
+      # This ensures your package version matches your release version (e.g., v1.0.1).
+      run: dotnet pack --configuration Release --no-build -p:PackageVersion=${{ github.event.release.tag_name }} --output ./nupkg
+
+    - name: Push to NuGet
+      # This pushes the package to NuGet.org using the API key you stored in secrets.
+      run: dotnet nuget push "./nupkg/SimpleRulesEngine.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
