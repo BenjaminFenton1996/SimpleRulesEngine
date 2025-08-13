@@ -25,9 +25,12 @@ jobs:
       run: dotnet build ./SimpleRulesEngine/SimpleRulesEngine.csproj --configuration Release --no-restore
 
     - name: Pack the main project
-      # This command packs only the specified project.
-      # It uses the release tag for the version number.
-      run: dotnet pack ./SimpleRulesEngine/SimpleRulesEngine.csproj --configuration Release --no-build -p:PackageVersion=${{ github.event.release.tag_name }} --output ./nupkg
+      run: >
+        dotnet pack ./SimpleRulesEngine/SimpleRulesEngine.csproj 
+        --configuration Release 
+        --no-build 
+        -p:PackageVersion=${{ trim(github.event.release.tag_name, 'v') }} 
+        --output ./nupkg
 
     - name: Push to NuGet
       # The push command remains the same, targeting the created package.
