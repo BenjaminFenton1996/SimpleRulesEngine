@@ -5,7 +5,7 @@
 	<TargetFrameworks>netstandard2.0</TargetFrameworks>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>Simple Rules Engine</Title>
-	<PackageId>SimpleRulesEngine</PackageId>
+	<PackageId>BenFenton.SimpleRulesEngine</PackageId>
 	<Description>A simple and opinionated rules engine</Description>
 	<RepositoryUrl>https://github.com/BenjaminFenton1996/SimpleRulesEngine</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
