@@ -34,4 +34,4 @@ jobs:
 
     - name: Push to NuGet
       # The push command remains the same, targeting the created package.
-      run: dotnet nuget push "./nupkg/SimpleRulesEngine.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
+      run: dotnet nuget push "./nupkg/BenFenton.SimpleRulesEngine.*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json"
